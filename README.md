@@ -26,8 +26,8 @@ To view instructions for deploying the Network License Manager for MATLAB refere
 > MathWorks recommends using the template for the [Latest](releases/v1/latest/README.md) release, which is also compatible with prior releases of MATLAB, MATLAB Parallel Server, and MATLAB Production Server. From May 2025, this will be the only template listed here.
 
 | Release |
-|---------|
 | [Latest - Network License Manager](releases/v1/latest/README.md) |
+| [v1](releases/v1/README.md) |
 | [R2025a](releases/R2025a/README.md) |
 | [R2024b](releases/R2024b/README.md) |
 | [R2024a](releases/R2024a/README.md) |
