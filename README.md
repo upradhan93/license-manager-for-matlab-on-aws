@@ -1,41 +1,74 @@
-# Private Networking Requirements for MATLAB Parallel Server Cluster
+# MATLAB Parallel Server - Private Networking Configuration
 
 ## Overview
 
-You can deploy the MATLAB Parallel Server cluster and head-node without Public IPv4 addresses by setting the `EnablePublicIPAddress` parameter to `No` during stack creation. In this setting, the head-node and the worker nodes are configured to communicate with each other and the MATLAB client via their private DNS names.
+This guide outlines the networking prerequisites for deploying the MATLAB Parallel Server cluster in an AWS environment without public IP addresses. This is a common security requirement that ensures all cluster traffic remains within your private network.
+
+## Private Networking Deployment
+
+You can deploy the cluster without public IPv4 addresses by setting the `EnablePublicIPAddress` parameter to `No` during stack creation. In this configuration, all communication occurs via private DNS names or private IP addresses.
 
 ## Prerequisites
 
-Before deploying the template, ensure that the following requirements are met:
+### Network Configuration
 
-- The head-node and worker nodes (ASG cluster) must be deployed in the same VPC. This is done by default by the CloudFormation template.
-- All instances in the cluster , including the head-node, must be able to resolve each other's private DNS names
-- For features like auto-scaling, auto-termination, or shared storage, cluster subnets must have internet connectivity via a NAT Gateway to reach AWS service endpoints
+- **VPC Requirement**: The head node and worker nodes must be deployed in the same VPC (automatically configured by the CloudFormation template)
+- **DNS Resolution**: All cluster instances must be able to resolve each other's private DNS names
+- **S3 Access (Required)**: The cluster and head node require access to Amazon S3 for reading/writing secrets, cluster profiles, and configuration files. This must be configured before deployment.
+- **Internet Connectivity**: Required for auto-scaling, auto-termination, and shared storage features via NAT Gateway
 
 ### DNS Resolution Requirements
 
-#### 1. MATLAB Client DNS Resolution
-The MATLAB Client (whether on-premises or in AWS) must be able to resolve the private DNS names of:
-- The head-node instance
-- All worker node instances in the Auto Scaling Group
+#### 1. MATLAB Client Resolution
 
-#### 2. Cluster Internal DNS Resolution
-- The head-node must be able to resolve the private DNS names of all worker nodes
-- Worker nodes must be able to resolve the private DNS names of other worker nodes in the cluster
+The MATLAB client (whether on-premises or in AWS) must resolve:
+- The head node's private DNS name
+- All worker node private DNS names in the Auto Scaling Group
 
-**Note:** If your VPC uses the default Amazon-provided DNS server (AmazonProvidedDNS), internal cluster DNS resolution is automatically satisfied. However, if you are using a custom DNS server with your VPC, you must configure it to resolve these private DNS names.
+#### 2. Cluster Internal Resolution
 
-For MATLAB R2025a and newer releases, the cluster can be configured to communicate via Private IPv4 addresses using the `CommunicationMode` parameter, instead of DNS names. This relaxes the requirement of registring the cluster nodes with custom DNS servers since the MATLAB Client can now connect to the head-node and worker nodes via their Private IP addresses.
+- Head node must resolve all worker node private DNS names
+- Worker nodes must resolve other worker nodes' private DNS names
 
-### 3. Internet Connectivity
-If you are using auto-scaling, auto-termination, or shared storage features, ensure that cluster subnets are connected to the internet via a NAT Gateway.
+> **Note**: If using the default Amazon-provided DNS (AmazonProvidedDNS), internal DNS resolution is automatically configured. Custom DNS servers require additional configuration (see below).
 
-## Requirements for VPCs with Custom DNS Servers
+#### 3. Communication Mode (R2025a and Later)
 
-### DNS Auto-Registration Setup
+For MATLAB R2025a and newer releases, you can configure the cluster to use the `CommunicationMode` parameter to communicate via private IPv4 addresses instead of DNS names. This simplifies deployment by eliminating the need to register cluster nodes with custom DNS servers.
 
-When using a custom DNS server, you must implement a mechanism to automatically register and deregister A records (that maps the private DNS names to corresponding private IPs, e.g., `ip-10-0-10-1.mycompany.internal` maps to `10.0.10.1`) of the instances with your DNS server as they launch and terminate.
+### Internet Connectivity
 
-This is required for jobs where the workers must communicate with each other and the MATLAB Client must directly communicate with one or more workers.
+If using any of the following features, ensure cluster subnets have internet access via NAT Gateway:
+- Auto-scaling
+- Auto-termination
+- Shared storage
 
-If the DNS server cannot resolve the private DNS names of the workers, the job might fail or get stuck indefinitely.
+## S3 Access Configuration (Required)
+
+### Overview
+
+The MATLAB Parallel Server cluster requires access to Amazon S3 to:
+- Store and retrieve cluster configuration files
+- Manage secrets and credentials
+- Store cluster profiles
+- Handle job data and intermediate results
+
+**This S3 access must be configured before deploying the CloudFormation stack.**
+
+## Custom DNS Server Requirements
+
+### DNS Auto-Registration
+
+When using a custom DNS server, implement automatic registration and deregistration of A records as instances launch and terminate.
+
+**Example DNS Mapping**:
+- DNS Name: `ip-10-0-10-1.mycompany.internal`
+- Private IP: `10.0.10.1`
+
+### Why This Matters
+
+DNS auto-registration is critical for:
+- **Worker-to-Worker Communication**: Jobs requiring direct worker communication
+- **Client-to-Worker Communication**: MATLAB client direct access to specific workers
+
+> **Warning**: If the DNS server cannot resolve worker private DNS names, jobs may fail or hang indefinitely.
