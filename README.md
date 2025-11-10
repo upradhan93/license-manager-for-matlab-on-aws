@@ -25,18 +25,16 @@ The MATLAB Client (whether on-premises or in AWS) must be able to resolve the pr
 
 **Note:** If your VPC uses the default Amazon-provided DNS server (AmazonProvidedDNS), internal cluster DNS resolution is automatically satisfied. However, if you are using a custom DNS server with your VPC, you must configure it to resolve these private DNS names.
 
-For MATLAB R2025a and newer releases, the cluster can be configured to communicate via Private IPv4 addresses via the `CommunicationMode` parameter, instead of DNS names. This relaxes the requirement of registring the cluster nodes with custom DNS servers since the MATLAB Client can now connect to the head-node and worker nodes via their Private IP addresses.
+For MATLAB R2025a and newer releases, the cluster can be configured to communicate via Private IPv4 addresses using the `CommunicationMode` parameter, instead of DNS names. This relaxes the requirement of registring the cluster nodes with custom DNS servers since the MATLAB Client can now connect to the head-node and worker nodes via their Private IP addresses.
 
 ### 3. Internet Connectivity
-If you are using auto-scaling, auto-termination, or shared storage features, ensure that:
-- Cluster subnets are connected to the internet via a NAT Gateway
-- Security groups allow outbound traffic to AWS service endpoints
+If you are using auto-scaling, auto-termination, or shared storage features, ensure that cluster subnets are connected to the internet via a NAT Gateway.
 
 ## Requirements for VPCs with Custom DNS Servers
 
 ### DNS Auto-Registration Setup
 
-When using a custom DNS server, you must implement a mechanism to automatically register and deregister A records (that maps the private DNS names to corresponding private IPs, e.g., ip-10-0-10-1.mycompany.internal maps to 10.0.10.1) of the instances with your DNS server as they launch and terminate.
+When using a custom DNS server, you must implement a mechanism to automatically register and deregister A records (that maps the private DNS names to corresponding private IPs, e.g., `ip-10-0-10-1.mycompany.internal` maps to `10.0.10.1`) of the instances with your DNS server as they launch and terminate.
 
 This is required for jobs where the workers must communicate with each other and the MATLAB Client must directly communicate with one or more workers.
 
