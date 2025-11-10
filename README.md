@@ -21,14 +21,14 @@ You can deploy the cluster without public IPv4 addresses by setting the `EnableP
 
 #### 1. MATLAB Client Resolution
 
-The MATLAB client (whether on-premises or in AWS) must resolve:
+The MATLAB client (whether on-premises or in AWS) must be able to resolve:
 - The head node's private DNS name
-- All worker node private DNS names in the Auto Scaling Group
+- Private DNS names of all worker nodes in the Auto Scaling Group
 
 #### 2. Cluster Internal Resolution
 
-- Head node must resolve all worker node private DNS names
-- Worker nodes must resolve other worker nodes' private DNS names
+- Head node must be able to resolve private DNS names of all worker nodes
+- Worker nodes must be able to resolve other worker nodes' private DNS names
 
 > **Note**: If using the default Amazon-provided DNS (AmazonProvidedDNS), internal DNS resolution is automatically configured. Custom DNS servers require additional configuration (see below).
 
@@ -53,13 +53,13 @@ The MATLAB Parallel Server cluster requires access to Amazon S3 to:
 - Store cluster profiles
 - Handle job data and intermediate results
 
-**This S3 access must be configured before deploying the CloudFormation stack.**
+**S3 access must be configured before deploying the CloudFormation stack. One way to provide private subnets access to the Amazon S3 service is via [S3 Gateway Endpoint](https://docs.aws.amazon.com/vpc/latest/privatelink/vpc-endpoints-s3.html).**
 
 ## Custom DNS Server Requirements
 
 ### DNS Auto-Registration
 
-When using a custom DNS server, implement automatic registration and deregistration of A records as instances launch and terminate.
+When using a custom DNS server in the cluster VPC, you must implement automatic registration and deregistration of A records with the DNS server as instances launch and terminate.
 
 **Example DNS Mapping**:
 - DNS Name: `ip-10-0-10-1.mycompany.internal`
@@ -67,8 +67,8 @@ When using a custom DNS server, implement automatic registration and deregistrat
 
 ### Why This Matters
 
-DNS auto-registration is critical for:
+Auto-registration of records is critical for:
 - **Worker-to-Worker Communication**: Jobs requiring direct worker communication
 - **Client-to-Worker Communication**: MATLAB client direct access to specific workers
 
-> **Warning**: If the DNS server cannot resolve worker private DNS names, jobs may fail or hang indefinitely.
+If the DNS server cannot resolve the private DNS names of the headnode or workers, jobs may fail or hang indefinitely.
